@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TRÉJEUR — Partage ton instant</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Blinker:wght@300;400;600&family=Alice&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --jaune:  #fff3c2;
+      --rose:   #ffd6d6;
+      --or:     #af9e70;
+      --noir:   #1a1a1a;
+      --gris:   #545454;
+      --beige:  #e8dfc8;
+      --muted:  #a09888;
+    }
+
+    body {
+      background: var(--jaune);
+      font-family: 'Blinker', sans-serif;
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+
+    /* ── Layout ─────────────────────────────────────── */
+    .wrap { max-width: 480px; margin: 0 auto; padding: 0 20px; }
+
+    /* ── Header ─────────────────────────────────────── */
+    .header {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 24px 0 12px;
+    }
+    .brand {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px; color: var(--or); letter-spacing: 3px;
+    }
+    .tagline {
+      font-size: 11px; color: var(--or); letter-spacing: 2px;
+      text-transform: uppercase; opacity: .75; margin-top: 3px;
+    }
+
+    /* ── Steps ──────────────────────────────────────── */
+    .steps {
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; padding: 14px 0 20px;
+    }
+    .step { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #c4baa8; }
+    .step.active { color: var(--or); font-weight: 600; }
+    .step-dot { width: 7px; height: 7px; border-radius: 50%; background: #d4c9b0; }
+    .step.active .step-dot { background: var(--or); }
+    .step-line { width: 22px; height: 1px; background: #d4c9b0; }
+
+    /* ── Banner ─────────────────────────────────────── */
+    .banner {
+      background: var(--rose); border-radius: 12px;
+      padding: 13px 18px; text-align: center;
+      font-size: 13.5px; color: var(--gris); line-height: 1.55;
+      margin-bottom: 20px;
+    }
+
+    /* ── Card ───────────────────────────────────────── */
+    .card {
+      background: white; border-radius: 16px;
+      padding: 26px 22px 20px; margin-bottom: 22px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.07); position: relative;
+    }
+    .quote-mark {
+      font-family: 'Alice', serif; font-size: 88px;
+      color: var(--or); opacity: .15;
+      position: absolute; top: -4px; left: 14px;
+      line-height: 1; pointer-events: none; user-select: none;
+    }
+    .msg-image {
+      width: 100%; border-radius: 10px; margin-bottom: 14px;
+      object-fit: cover; max-height: 200px;
+    }
+    .msg-text {
+      font-family: 'Alice', serif; font-size: 16px;
+      color: var(--noir); line-height: 1.75;
+      padding-top: 24px; position: relative; z-index: 1;
+    }
+    .msg-meta {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 14px; padding-top: 12px;
+      border-top: 1px solid #f0e8d0;
+    }
+    .msg-author { font-size: 13px; color: var(--or); font-weight: 600; }
+    .msg-date   { font-size: 11px; color: #b0a898; }
+
+    /* ── Divider ────────────────────────────────────── */
+    .divider {
+      text-align: center; color: #d4c9b0;
+      font-size: 18px; letter-spacing: 6px; margin-bottom: 20px;
+    }
+
+    /* ── Section ────────────────────────────────────── */
+    .section { margin-bottom: 18px; }
+    .section-label {
+      font-family: 'Bebas Neue', sans-serif; font-size: 13px;
+      letter-spacing: 2px; color: var(--or);
+      text-transform: uppercase; margin-bottom: 8px;
+    }
+    .section-label span {
+      font-family: 'Blinker', sans-serif; font-size: 11px;
+      letter-spacing: 0; text-transform: none;
+      font-weight: 400; color: #c4baa8;
+    }
+    .question-text {
+      font-family: 'Alice', serif; font-size: 17px;
+      color: var(--noir); line-height: 1.55; margin-bottom: 14px;
+    }
+
+    /* ── Inputs ─────────────────────────────────────── */
+    input[type="text"], input[type="email"], textarea {
+      width: 100%; background: white;
+      border: 1.5px solid var(--beige); border-radius: 12px;
+      padding: 13px 16px;
+      font-family: 'Blinker', sans-serif; font-size: 15.5px;
+      color: var(--gris); outline: none;
+      transition: border-color .2s;
+    }
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    textarea:focus { border-color: var(--or); }
+    input[type="text"]::placeholder,
+    input[type="email"]::placeholder,
+    textarea::placeholder { color: #c4baa8; font-style: italic; }
+    textarea { resize: none; height: 108px; line-height: 1.55; }
+    .char-count {
+      text-align: right; font-size: 11px;
+      color: #c4baa8; margin-top: 4px;
+    }
+    .input-gap { margin-bottom: 10px; }
+
+    /* ── Image upload ───────────────────────────────── */
+    .upload-btn {
+      display: flex; align-items: center; gap: 10px;
+      background: white; border: 1.5px dashed #d4c9b0;
+      border-radius: 12px; padding: 13px 16px;
+      font-size: 14px; color: var(--muted);
+      cursor: pointer; width: 100%;
+      font-family: 'Blinker', sans-serif;
+      transition: border-color .2s;
+    }
+    .upload-btn:hover { border-color: var(--or); color: var(--or); }
+    .preview-wrap { position: relative; margin-bottom: 10px; }
+    .preview-img {
+      width: 100%; border-radius: 10px;
+      max-height: 180px; object-fit: cover; display: block;
+    }
+    .remove-img {
+      position: absolute; top: 8px; right: 8px;
+      background: rgba(26,26,26,.65); color: white;
+      border: none; border-radius: 50%;
+      width: 28px; height: 28px; cursor: pointer;
+      font-size: 14px; display: flex;
+      align-items: center; justify-content: center;
+    }
+
+    /* ── Consent ────────────────────────────────────── */
+    .consent-wrap {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: white; border: 1.5px solid var(--beige);
+      border-radius: 12px; padding: 14px 16px;
+    }
+    .consent-wrap input[type="checkbox"] {
+      width: 18px; height: 18px; min-width: 18px;
+      accent-color: var(--or); margin-top: 2px;
+      cursor: pointer; border: none; padding: 0;
+    }
+    .consent-text {
+      font-size: 13px; color: var(--gris); line-height: 1.5;
+    }
+    .consent-text a {
+      color: var(--or); text-decoration: underline;
+    }
+
+    /* ── Submit ─────────────────────────────────────── */
+    .submit-btn {
+      width: 100%; background: var(--noir);
+      color: var(--jaune); border: none; border-radius: 12px;
+      padding: 16px; font-family: 'Blinker', sans-serif;
+      font-size: 16px; font-weight: 600; letter-spacing: .5px;
+      cursor: pointer; transition: background .2s, opacity .2s;
+    }
+    .submit-btn:disabled {
+      opacity: .45; cursor: not-allowed;
+    }
+    .submit-btn:not(:disabled):hover { background: #2d2d2d; }
+    .submit-note {
+      text-align: center; font-size: 11.5px;
+      color: var(--muted); margin-top: 10px; line-height: 1.55;
+    }
+    .submit-note a { color: var(--or); }
+
+    /* ── Error ──────────────────────────────────────── */
+    .error-box {
+      background: #ffe0e0; border-radius: 10px;
+      padding: 12px 16px; font-size: 13.5px;
+      color: #c0392b; margin-bottom: 12px; line-height: 1.5;
+    }
+
+    /* ── Loading ────────────────────────────────────── */
+    #screen-loading {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 60vh; gap: 14px;
+      color: var(--or); font-size: 15px; letter-spacing: 1px;
+    }
+    .tea-spin {
+      font-size: 36px;
+      animation: spin 2s linear infinite;
+    }
+    @keyframes spin {
+      0%   { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* ── Success ────────────────────────────────────── */
+    #screen-success { display: none; }
+    .success-card {
+      background: white; border-radius: 16px;
+      padding: 40px 24px; text-align: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,.07);
+    }
+    .success-emoji { font-size: 48px; margin-bottom: 16px; }
+    .success-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px; color: var(--or);
+      letter-spacing: 2px; margin-bottom: 12px;
+    }
+    .success-text {
+      font-size: 15px; color: var(--gris);
+      line-height: 1.65;
+    }
+
+    /* ── Screens ────────────────────────────────────── */
+    #screen-main  { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════ HEADER (toujours visible) ══════════════════ -->
+<div class="header wrap">
+  <span class="brand">TRÉJEUR</span>
+  <span class="tagline">Source d'instants partagés</span>
+</div>
+
+<!-- ══════════════════ LOADING ══════════════════ -->
+<div id="screen-loading" class="wrap">
+  <div class="tea-spin">🍵</div>
+  <span>Laisse infuser…</span>
+</div>
+
+<!-- ══════════════════ MAIN ══════════════════ -->
+<div id="screen-main" class="wrap">
+
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step active"><div class="step-dot"></div><span>Lis</span></div>
+    <div class="step-line"></div>
+    <div class="step active"><div class="step-dot"></div><span>Réponds</span></div>
+    <div class="step-line"></div>
+    <div class="step"><div class="step-dot"></div><span>Transmets</span></div>
+  </div>
+
+  <!-- Banner -->
+  <div class="banner">
+    ✨ <strong>Quelqu'un t'a laissé un message</strong><br>
+    en savourant ce thé avant toi
+  </div>
+
+  <!-- Message card -->
+  <div class="card">
+    <div class="quote-mark">"</div>
+    <img id="msg-image" class="msg-image" src="" alt="Moment partagé" style="display:none" />
+    <p id="msg-text" class="msg-text"></p>
+    <div class="msg-meta">
+      <span id="msg-author" class="msg-author"></span>
+      <span id="msg-date"   class="msg-date"></span>
+    </div>
+  </div>
+
+  <!-- Divider -->
+  <div class="divider">✦ ✦ ✦</div>
+
+  <!-- Form -->
+  <div class="section">
+    <div class="section-label">À ton tour</div>
+    <p id="question-text" class="question-text"></p>
+
+    <div class="input-gap">
+      <input type="text" id="input-prenom" placeholder="Ton prénom" maxlength="40" />
+    </div>
+    <div class="input-gap">
+      <input type="email" id="input-email" placeholder="Ton email (pour tes récompenses)" maxlength="120" />
+    </div>
+    <textarea id="input-message" placeholder="Écris pour le prochain buveur…" maxlength="500"></textarea>
+    <div class="char-count"><span id="char-count">0</span>/500</div>
+  </div>
+
+  <!-- Image upload -->
+  <div class="section">
+    <div class="section-label">Photo <span>— optionnel</span></div>
+    <div id="preview-wrap" class="preview-wrap" style="display:none">
+      <img id="preview-img" class="preview-img" src="" alt="Aperçu" />
+      <button class="remove-img" id="btn-remove-img" title="Supprimer">✕</button>
+    </div>
+    <button class="upload-btn" id="btn-upload" onclick="document.getElementById('file-input').click()">
+      <span>📷</span><span>Partage ton moment en photo</span>
+    </button>
+    <input type="file" id="file-input" accept="image/*" style="display:none" />
+  </div>
+
+  <!-- Consentement RGPD / LPD -->
+  <div class="section">
+    <div class="consent-wrap">
+      <input type="checkbox" id="consent-check" />
+      <label class="consent-text" for="consent-check">
+        J'accepte que Tréjeur conserve mon email et mon prénom pour suivre mes partages et m'envoyer mes récompenses. Aucun usage commercial, aucun partage à des tiers. Pour toute demande : <a href="mailto:hello@trejeur.ch">hello@trejeur.ch</a>
+      </label>
+    </div>
+  </div>
+
+  <!-- Erreur -->
+  <div id="error-box" class="error-box" style="display:none"></div>
+
+  <!-- Submit -->
+  <div class="section">
+    <button class="submit-btn" id="btn-submit" disabled>
+      Transmettre mon message →
+    </button>
+    <p class="submit-note">
+      Partage 10 jours différents et reçois <strong>−10%</strong> sur ta prochaine commande.<br>
+      Questions ? <a href="mailto:hello@trejeur.ch">hello@trejeur.ch</a>
+    </p>
+  </div>
+
+</div><!-- /screen-main -->
+
+<!-- ══════════════════ SUCCESS ══════════════════ -->
+<div id="screen-success" class="wrap">
+  <div style="padding: 20px 0">
+    <div class="success-card">
+      <div class="success-emoji">✨</div>
+      <div class="success-title">Message transmis</div>
+      <p class="success-text">
+        Ton message voyagera jusqu'au prochain buveur de ce thé.<br><br>
+        <strong>Reviens chaque jour</strong> partager un instant — après 10 jours différents, tu reçois <strong>−10%</strong> sur ta prochaine commande Tréjeur.<br><br>
+        À bientôt, <span id="success-prenom"></span> ☕
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ JS ══════════════════ -->
+<script>
+  // ─── Config Supabase ────────────────────────────────────────────
+  const SUPABASE_URL  = 'https://gxhcdmlynnsoqqtdhydc.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4aGNkbWx5bm5zb3FxdGRoeWRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2MzQ4ODQsImV4cCI6MjA5MTIxMDg4NH0.NY4y5XXlENOO_UxfkZtNvjo_cfJrNpZalZ__yCVEVro';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  // ─── State ──────────────────────────────────────────────────────
+  let selectedFile  = null;
+  let currentMsgId  = null;
+
+  // ─── Helpers ────────────────────────────────────────────────────
+  function show(id)  { document.getElementById(id).style.display = ''; }
+  function hide(id)  { document.getElementById(id).style.display = 'none'; }
+  function $(id)     { return document.getElementById(id); }
+
+  function formatDate(str) {
+    if (!str) return '';
+    const diff = Math.floor((Date.now() - new Date(str)) / 86400000);
+    if (diff === 0) return 'aujourd\'hui';
+    if (diff === 1) return 'hier';
+    if (diff < 7)   return `il y a ${diff} jours`;
+    return new Date(str).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+  }
+
+  function showError(msg) {
+    const box = $('error-box');
+    box.textContent = msg;
+    box.style.display = '';
+  }
+  function hideError() { hide('error-box'); }
+
+  // ─── Load data ──────────────────────────────────────────────────
+  async function loadPage() {
+    try {
+      // 1. Charger les messages validés, triés par score
+      const { data: msgs } = await sb
+        .from('messages')
+        .select('*')
+        .eq('validated', true)
+        .order('score_rotation', { ascending: true })
+        .limit(50);
+
+      // Sélectionner dans le tiers inférieur (moins vus)
+      if (msgs && msgs.length > 0) {
+        const poolSize = Math.max(1, Math.floor(msgs.length * 0.33));
+        const pool     = msgs.slice(0, poolSize);
+        const msg      = pool[Math.floor(Math.random() * pool.length)];
+        currentMsgId   = msg.id;
+
+        $('msg-text').textContent   = msg.message;
+        $('msg-author').textContent = msg.prenom ? `— ${msg.prenom}` : '— Anonyme';
+        $('msg-date').textContent   = formatDate(msg.created_at);
+
+        if (msg.image_url) {
+          const img = $('msg-image');
+          img.src   = msg.image_url;
+          img.style.display = '';
+        }
+      } else {
+        // Premier message — invitation spéciale
+        $('msg-text').textContent   = 'Tu es parmi les premiers buveurs Tréjeur. Laisse le premier message pour ceux qui viendront après toi. ✨';
+        $('msg-author').textContent = '';
+        $('msg-date').textContent   = '';
+      }
+
+      // 2. Charger une question du jour (seed basé sur le jour)
+      const { data: questions } = await sb
+        .from('questions')
+        .select('*')
+        .eq('active', true);
+
+      if (questions && questions.length > 0) {
+        const seed  = Math.floor(Date.now() / 86400000); // change chaque jour
+        const q     = questions[seed % questions.length];
+        $('question-text').textContent = q.texte;
+      }
+
+      // 3. Afficher la page
+      hide('screen-loading');
+      show('screen-main');
+
+    } catch (err) {
+      console.error(err);
+      hide('screen-loading');
+      showError('Une erreur est survenue. Réessaie dans un instant.');
+      show('screen-main');
+    }
+  }
+
+  // ─── Image upload preview ────────────────────────────────────────
+  $('file-input').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    selectedFile = file;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      $('preview-img').src = reader.result;
+      show('preview-wrap');
+      hide('btn-upload');
+    };
+    reader.readAsDataURL(file);
+  });
+
+  $('btn-remove-img').addEventListener('click', () => {
+    selectedFile = null;
+    $('file-input').value = '';
+    $('preview-img').src  = '';
+    hide('preview-wrap');
+    show('btn-upload');
+  });
+
+  // ─── Char counter ────────────────────────────────────────────────
+  $('input-message').addEventListener('input', () => {
+    $('char-count').textContent = $('input-message').value.length;
+    updateSubmitBtn();
+  });
+
+  // ─── Enable/disable submit ───────────────────────────────────────
+  ['input-prenom','input-email','input-message','consent-check'].forEach(id => {
+    $(id).addEventListener('input',  updateSubmitBtn);
+    $(id).addEventListener('change', updateSubmitBtn);
+  });
+
+  function updateSubmitBtn() {
+    const ok =
+      $('input-prenom').value.trim().length  > 0 &&
+      $('input-email').value.trim().length   > 0 &&
+      $('input-message').value.trim().length > 0 &&
+      $('consent-check').checked;
+    $('btn-submit').disabled = !ok;
+  }
+
+  // ─── Submit ──────────────────────────────────────────────────────
+  $('btn-submit').addEventListener('click', async () => {
+    hideError();
+    const prenom  = $('input-prenom').value.trim();
+    const email   = $('input-email').value.trim();
+    const message = $('input-message').value.trim();
+    const consent = $('consent-check').checked;
+
+    if (!prenom || !email || !message || !consent) return;
+
+    $('btn-submit').disabled     = true;
+    $('btn-submit').textContent  = 'Envoi en cours…';
+
+    try {
+      // 1. Upload image si présente
+      let image_url = null;
+      if (selectedFile) {
+        const ext      = selectedFile.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const { data: upData, error: upErr } = await sb.storage
+          .from('images')
+          .upload(fileName, selectedFile, { contentType: selectedFile.type });
+
+        if (upErr) {
+          // Storage pas encore configuré → on continue sans image
+          console.warn('Image upload skipped:', upErr.message);
+        } else {
+          const { data: urlData } = sb.storage.from('images').getPublicUrl(fileName);
+          image_url = urlData.publicUrl;
+        }
+      }
+
+      // 2. Upsert membre (email unique)
+      const { data: membre, error: memErr } = await sb
+        .from('membres')
+        .upsert({ email, prenom, consentement: true }, { onConflict: 'email' })
+        .select()
+        .single();
+
+      if (memErr) throw memErr;
+
+      // 3. Vérifier si ce membre a déjà partagé aujourd'hui
+      const today = new Date().toISOString().slice(0, 10);
+      const { data: dejaPartagé } = await sb
+        .from('partages')
+        .select('id')
+        .eq('membre_id', membre.id)
+        .eq('date_partage', today)
+        .maybeSingle();
+
+      // 4. Insérer le message
+      const { data: newMsg, error: msgErr } = await sb
+        .from('messages')
+        .insert({
+          message,
+          prenom,
+          image_url,
+          question: $('question-text').textContent,
+          score_rotation: 0,
+          validated: false, // modération manuelle dans Supabase
+        })
+        .select()
+        .single();
+
+      if (msgErr) throw msgErr;
+
+      // 5. Enregistrer le partage
+      await sb.from('partages').insert({
+        membre_id:    membre.id,
+        message_id:   newMsg.id,
+        date_partage: today,
+      });
+
+      // 6. Si nouveau jour → incrémenter compteur
+      if (!dejaPartagé) {
+        const newCount = (membre.nb_jours_distincts || 0) + 1;
+        await sb.from('membres').update({
+          nb_jours_distincts: newCount,
+          recompense_debloquee: newCount >= 10,
+        }).eq('id', membre.id);
+
+        // 7. Si 10 jours atteints → envoyer email (géré manuellement pour l'instant)
+        // Tu verras recompense_debloquee = true dans Supabase → tu envoies le code manuellement
+      }
+
+      // 8. Incrémenter score du message lu
+      if (currentMsgId) {
+        const { data: cur } = await sb
+          .from('messages').select('score_rotation').eq('id', currentMsgId).single();
+        if (cur) {
+          await sb.from('messages')
+            .update({ score_rotation: (cur.score_rotation || 0) + 1 })
+            .eq('id', currentMsgId);
+        }
+      }
+
+      // 9. Succès
+      $('success-prenom').textContent = prenom;
+      hide('screen-main');
+      show('screen-success');
+
+    } catch (err) {
+      console.error(err);
+      showError('Une erreur est survenue. Réessaie dans un instant ou écris-nous à hello@trejeur.ch');
+      $('btn-submit').disabled    = false;
+      $('btn-submit').textContent = 'Transmettre mon message →';
+    }
+  });
+
+  // ─── Init ────────────────────────────────────────────────────────
+  loadPage();
+</script>
+</body>
+</html>
